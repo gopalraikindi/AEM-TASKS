@@ -1,1 +1,9 @@
+<div data-sly-use.pageSearchModel="com.adobe.aem.mysite.site.core.models.PageSearchModel">
 
+<div>
+
+        ${pageSearchModel.pageTitle}
+
+
+    </div>
+</div>
