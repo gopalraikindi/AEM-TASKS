@@ -1,0 +1,221 @@
+MODEL CLASS
+-----------
+package com.adobe.aem.mysite.site.core.models;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.annotation.PostConstruct;
+
+import org.apache.sling.api.SlingHttpServletRequest;
+import org.apache.sling.api.resource.LoginException;
+import org.apache.sling.api.resource.Resource;
+import org.apache.sling.api.resource.ResourceResolver;
+import org.apache.sling.api.resource.ResourceResolverFactory;
+import org.apache.sling.models.annotations.Model;
+import org.apache.sling.models.annotations.injectorspecific.OSGiService;
+import org.apache.sling.models.annotations.injectorspecific.Self;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+@Model(adaptables = SlingHttpServletRequest.class)
+public class PageSearchModel {
+
+    private static final Logger LOG = LoggerFactory.getLogger(PageSearchModel.class);
+
+    @Self
+    private SlingHttpServletRequest request;
+
+    @OSGiService
+    private PageService pageService;
+
+    @OSGiService
+    private ResourceResolverFactory resolverFactory;
+
+    private ResourceResolver resolver;
+
+    private Resource resource;
+
+    
+    private String pagePath;
+   
+
+
+  
+
+    public String getPagePath() {
+        LOG.info("Getting pagePath: {}", pagePath);
+        return pagePath;
+    }
+    
+    private Map<String, String> pageTitle = new HashMap<>();
+
+    public  String getPageTitle() {
+        LOG.info("Getting PageTitle : {}", PageService.pageTitle);
+        return PageService.pageTitle;
+    }
+    
+    
+
+    @PostConstruct
+    protected void init() {
+    	
+    	 // Retrieve the propertyId parameter from the request
+    	pagePath = request.getParameter("pagePath");
+
+        if (pagePath != null && !pagePath.isEmpty()) {
+            LOG.info("Received request with pagePath: {}", pagePath);
+            // Add your logic here to process the request with the propertyId
+            
+            
+        } else { 
+            LOG.error("No pagePath parameter found in the request");
+            // Handle the case where propertyId is not provided
+        }
+
+        try {
+            resolver = newResolver(resolverFactory);
+            LOG.info("Message with pagePath: {}", pagePath);
+            pageService.performQuery(pagePath);
+            LOG.info("Service calling done");
+            // Add your logic to handle the results of pageService.performQuery
+        } catch (Exception e) {
+            LOG.error("Error occurred while processing the request", e);
+            // Handle the exception
+        }
+    }
+
+    // Your other getter methods for properties and methods to handle the results from pageService.performQuery
+
+    public static final String GEEKS_SERVICE_USER = "geeksserviceuser";
+
+    public ResourceResolver newResolver(ResourceResolverFactory resourceResolverFactory) throws LoginException {
+        final Map<String, Object> paramMap = new HashMap<String, Object>();
+        paramMap.put(ResourceResolverFactory.SUBSERVICE, GEEKS_SERVICE_USER);
+
+        // fetches the admin service resolver using service user.
+        ResourceResolver resolver = resourceResolverFactory.getServiceResourceResolver(paramMap);
+        return resolver;
+    }
+}
+--------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------
+SERVICE CLASS
+-------------
+package com.adobe.aem.mysite.site.core.models;
+
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+
+import javax.jcr.Node;
+import javax.jcr.Session;
+
+import org.apache.sling.api.resource.LoginException;
+import org.apache.sling.api.resource.Resource;
+import org.apache.sling.api.resource.ResourceResolver;
+import org.apache.sling.api.resource.ResourceResolverFactory;
+import org.apache.sling.api.resource.PersistenceException; // Added for the example
+import org.apache.sling.api.resource.ResourceMetadata; // Added for the example
+import org.apache.sling.api.resource.ResourceResolver; // Added for the example
+import org.apache.sling.api.resource.ResourceResolverFactory; // Added for the example
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.day.cq.search.PredicateGroup;
+import com.day.cq.search.Query;
+import com.day.cq.search.QueryBuilder;
+import com.day.cq.search.result.SearchResult;
+
+@Component(service = PageService.class)
+public class PageService {
+
+    private static final Logger LOG = LoggerFactory.getLogger(PageService.class);
+
+    @Reference
+    private ResourceResolverFactory resourceResolverFactory;
+
+    @Reference
+    private QueryBuilder queryBuilder;
+
+    public static String pageTitle;
+
+    public void performQuery(String pagePath) {
+       
+
+        ResourceResolver resourceResolver = null;
+
+        try {
+            // Create service user session
+            resourceResolver = newResolver(resourceResolverFactory);
+
+            // Create a query map
+            
+            Map<String, String> map = new HashMap<>();
+            map.put("path", "/content/mysite/us/en");
+            map.put("type", "cq:Page");
+            map.put("group.p.or", "true");
+            map.put("group.1_fulltext", pagePath);
+            map.put("group.1_fulltext.relPath", "jcr:content");
+            map.put("group.2_fulltext", pagePath);
+            map.put("group.2_fulltext.relPath", "metadata");
+            map.put("p.limit", "-1");
+
+
+           
+
+            // Create the query
+            Query query = queryBuilder.createQuery(PredicateGroup.create(map), resourceResolver.adaptTo(Session.class));
+
+            // Execute the query
+            SearchResult result = query.getResult();
+            LOG.info("Query executed: {}", result.getQueryStatement());
+
+            // Process the search results
+            Iterator<Resource> resourceIterator = result.getResources();
+            while (resourceIterator.hasNext()) {
+                Resource pageResource = resourceIterator.next();
+                // Process each page resource
+                LOG.info("Found page: {}", pageResource.getPath());
+                Node pageNode = pageResource.adaptTo(Node.class);
+                pageNode = pageNode.getNode("jcr:content");
+
+                // Read properties based on jcr:title
+                pageTitle = pageNode.getProperty("jcr:title").getValue().getString();
+
+                // Your logic to further process the properties
+
+                LOG.info("Page Title: {}", pageTitle);
+            }
+            
+           
+            
+
+        } catch (Exception e) {
+            LOG.error("Error occurred while performing query", e);
+        } finally {
+            // Always close the ResourceResolver
+            if (resourceResolver != null && resourceResolver.isLive()) {
+                resourceResolver.close();
+                LOG.info("ResourceResolver closed");
+            }
+        }
+    }
+
+    public static final String GEEKS_SERVICE_USER = "geeksserviceuser";
+
+    public ResourceResolver newResolver(ResourceResolverFactory resourceResolverFactory) throws LoginException {
+        final Map<String, Object> paramMap = new HashMap<String, Object>();
+        paramMap.put(ResourceResolverFactory.SUBSERVICE, GEEKS_SERVICE_USER);
+
+        // Fetches the admin service resolver using service user.
+        return resourceResolverFactory.getServiceResourceResolver(paramMap);
+    }
+
+    public String getPageTitle() {
+        return pageTitle;
+    }
+}
