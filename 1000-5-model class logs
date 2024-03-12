@@ -1,0 +1,4 @@
+12.03.2024 12:36:30.951 *INFO* [[0:0:0:0:0:0:0:1] [1710227190800] GET /content/mysite/us/en/service_oklama_footer.html HTTP/1.1] com.adobe.aem.mysite.site.core.models.PageSearchModel Received request with pagePath: Digiquad
+12.03.2024 12:36:30.955 *INFO* [[0:0:0:0:0:0:0:1] [1710227190800] GET /content/mysite/us/en/service_oklama_footer.html HTTP/1.1] com.adobe.aem.mysite.site.core.models.PageSearchModel Message with pagePath: Digiquad
+12.03.2024 12:36:30.994 *INFO* [[0:0:0:0:0:0:0:1] [1710227190800] GET /content/mysite/us/en/service_oklama_footer.html HTTP/1.1] com.adobe.aem.mysite.site.core.models.PageSearchModel Service calling done
+12.03.2024 12:36:30.994 *INFO* [[0:0:0:0:0:0:0:1] [1710227190800] GET /content/mysite/us/en/service_oklama_footer.html HTTP/1.1] com.adobe.aem.mysite.site.core.models.PageSearchModel Getting PageTitle : gopal
