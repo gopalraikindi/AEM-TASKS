@@ -15,8 +15,11 @@ import org.apache.sling.api.resource.ResourceResolverFactory;
 import org.apache.sling.models.annotations.Model;
 import org.apache.sling.models.annotations.injectorspecific.OSGiService;
 import org.apache.sling.models.annotations.injectorspecific.Self;
+import org.apache.sling.models.annotations.injectorspecific.ValueMapValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.adobe.aem.mysite.site.core.services.PageService;
 
 @Model(adaptables = SlingHttpServletRequest.class)
 public class PageSearchModel {
@@ -32,19 +35,23 @@ public class PageSearchModel {
     @OSGiService
     private ResourceResolverFactory resolverFactory;
 
+    @ValueMapValue
     private String pagePath;
-    private List<String> foundPagePaths;
-    private String pageTitle;
+    
+    
+    private List<Map<String, String>> foundPages;
+    public List<Map<String, String>> getFoundPages() {
+		return foundPages;
+	}
+
+	private String pageTitle;
 
     public String getPagePath() {
         LOG.info("Getting pagePath: {}", pagePath);
         return pagePath;
     }
 
-    public List<String> getFoundPagePaths() {
-        LOG.info("Getting foundPagePaths: {}", foundPagePaths);
-        return foundPagePaths;
-    }
+    
 
     public String getPageTitle() {
         LOG.info("Getting PageTitle: {}", pageTitle);
@@ -54,7 +61,7 @@ public class PageSearchModel {
     @PostConstruct
     protected void init() {
         // Retrieve the pagePath parameter from the request
-        pagePath = request.getParameter("pagePath");
+       // pagePath = request.getParameter("pagePath");
 
         if (pagePath != null && !pagePath.isEmpty()) {
             LOG.info("Received request with pagePath: {}", pagePath);
@@ -70,8 +77,8 @@ public class PageSearchModel {
             
             // Call performQuery on PageService to populate foundPagePaths and pageTitle
             pageService.performQuery(pagePath);
-            foundPagePaths = pageService.getFoundPagePaths();
-            pageTitle = pageService.getPageTitle();
+            foundPages = pageService.getFoundPages();
+           // pageTitle = pageService.getPageTitle();
             
             LOG.info("Service calling done");
             // Add your logic to handle the results of pageService.performQuery
@@ -91,13 +98,12 @@ public class PageSearchModel {
         return resourceResolverFactory.getServiceResourceResolver(paramMap);
     }
     }
-
 --------------------------------------------------------------------------------------------------------------------------------
 --------------------------------------------------------------------------------------------------------------------------------
 --------------------------------------------------------------------------------------------------------------------------------
 SERVICE CLASS
 -------------
-package com.adobe.aem.mysite.site.core.models;
+package com.adobe.aem.mysite.site.core.services;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -133,17 +139,20 @@ public class PageService {
     @Reference
     private QueryBuilder queryBuilder;
 
-    private List<String> foundPagePaths;
+   
+     public List<Map<String, String>> getFoundPages() {
+		return foundPages;
+	}
 
-    public static String pageTitle;
+	public List<Map<String, String>> foundPages;
+
+    public String pageTitle;
 
     public void performQuery(String pagePath) {
+         foundPages = new ArrayList<>(); // Initialize foundPages here
         ResourceResolver resourceResolver = null;
 
         try {
-            // Initialize the list for found page paths
-            foundPagePaths = new ArrayList<>();
-
             // Create service user session
             resourceResolver = newResolver(resourceResolverFactory);
 
@@ -171,17 +180,19 @@ public class PageService {
             while (resourceIterator.hasNext()) {
                 Resource pageResource = resourceIterator.next();
                 // Process each page resource
-                String path = pageResource.getPath();
-                LOG.info("Found page: {}", path);
-                foundPagePaths.add(path);
-
                 Node pageNode = pageResource.adaptTo(Node.class);
                 pageNode = pageNode.getNode("jcr:content");
 
                 // Read properties based on jcr:title
-                pageTitle = pageNode.getProperty("jcr:title").getValue().getString();
-                
-                LOG.info("Page Title: {}", pageTitle);
+                String pageTitle = pageNode.getProperty("jcr:title").getValue().getString();
+                LOG.info("Found page title: {}", pageTitle);
+
+                // Store page title and path in a map
+                Map<String, String> pageInfo = new HashMap<>();
+                pageInfo.put("title", pageTitle);
+                pageInfo.put("path", pageResource.getPath()); // Use pageResource.getPath() instead of pagePath
+                foundPages.add(pageInfo);
+                LOG.info("Added page info: {}", pageInfo);
             }
         } catch (Exception e) {
             LOG.error("Error occurred while performing query", e);
@@ -192,14 +203,7 @@ public class PageService {
                 LOG.info("ResourceResolver closed");
             }
         }
-    }
-
-    public List<String> getFoundPagePaths() {
-        return foundPagePaths;
-    }
-
-    public String getPageTitle() {
-        return pageTitle;
+        
     }
 
     public ResourceResolver newResolver(ResourceResolverFactory resourceResolverFactory) throws LoginException {
@@ -210,4 +214,3 @@ public class PageService {
         return resourceResolverFactory.getServiceResourceResolver(paramMap);
     }
 }
-
