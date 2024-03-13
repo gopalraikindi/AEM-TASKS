@@ -1,1 +1,7 @@
+<sly data-sly-use.usernameModel="com.adobe.aem.mysite.site.core.models.PageSearchModel" />
 
+    ${usernameModel.pagePath}
+
+    <div data-sly-list="${usernameModel.foundPagePaths}">
+        ${item} <br>
+    </div>
