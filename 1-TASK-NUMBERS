@@ -10,4 +10,4 @@ Default Files for Every Task
 
 1000---Search a particular Word in pages using request parameter .
 
-1001---
+1001---if i give any word in the dialog box ,it search all the pages and gives the output of pages titles that contain a word ,that page titles acts as a link .
