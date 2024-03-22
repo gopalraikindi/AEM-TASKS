@@ -1,0 +1,36 @@
+<sly data-sly-use.model="com.adobe.aem.mysite.site.core.models.ServiceDemo"/>
+
+<style>  
+
+   .items-container {
+    background-color: black; 
+    padding: 10px; 
+    display: flex;
+    flex-wrap: wrap; /* Allow items to wrap to next line */
+    justify-content: flex-start; /* Align items to the start of the container */
+    align-items: center; 
+}
+
+.items { 
+    text-decoration: none;
+    color: white; 
+    margin-right: 10px;
+    margin-bottom: 10px; /* Add margin at the bottom of each item */
+    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+    padding: 5px 10px; /* Adjust padding as needed */
+}
+
+
+</style>
+
+<!-- Container with black background -->
+<div class="items-container">
+    <!-- Page titles will be displayed within this container -->
+    <div data-sly-list.item="${model.pagesList}">
+        <a class="items" href="${item.path}.html">${item.title}</a>
+    </div>
+</div>
+
+
+
+
