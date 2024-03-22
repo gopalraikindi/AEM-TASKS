@@ -11,3 +11,7 @@ Default Files for Every Task
 1000---Search a particular Word in pages using request parameter .
 
 1002---
+
+1003---in this task we need to take pagetitles using backend and next step is after getting the page titles we need to convert the pagetitles and navigation-bar component
+and after that what ever the pagetitles we are having in the navigation bar , when we used to click on the title it should render that page and one more task is
+if i create a new page in sites it should render that page  automatically on the navigation bar component 
