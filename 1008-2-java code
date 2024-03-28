@@ -1,0 +1,62 @@
+MODEL CLASS
+------------
+package com.adobe.tourism.core.models;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.sling.api.resource.Resource;
+import org.apache.sling.models.annotations.Default;
+import org.apache.sling.models.annotations.DefaultInjectionStrategy;
+import org.apache.sling.models.annotations.Model;
+import org.apache.sling.models.annotations.injectorspecific.ValueMapValue;
+
+@Model(adaptables = { Resource.class }, defaultInjectionStrategy = DefaultInjectionStrategy.OPTIONAL)
+
+public class LinksModel {
+	
+
+	@ValueMapValue
+	@Default(values = StringUtils.EMPTY)
+	private String linkLabel;
+
+	@ValueMapValue
+	private String linkURL;
+
+	public String getLinkLabel() {
+		return linkLabel;
+	}
+
+	public String getLinkURL() {
+		return StringUtils.join(linkURL, ".html");
+	}
+
+
+}
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+MODEL CLASS-1
+---------------
+package com.adobe.tourism.core.models;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.sling.api.resource.Resource;
+import org.apache.sling.models.annotations.DefaultInjectionStrategy;
+import org.apache.sling.models.annotations.Model;
+import org.apache.sling.models.annotations.injectorspecific.ChildResource;
+
+@Model(adaptables = { Resource.class }, defaultInjectionStrategy = DefaultInjectionStrategy.OPTIONAL)
+public class MultifieldResource {
+	
+	@ChildResource
+	private final List<LinksModel> quickLinks  =  new ArrayList<>();
+
+	public List<LinksModel> getQuickLinks() {
+		List<LinksModel> linkscopy = new ArrayList<LinksModel>();
+		linkscopy.addAll(quickLinks);
+		return linkscopy;	
+		
+	}
+
+}
