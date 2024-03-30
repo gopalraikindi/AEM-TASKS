@@ -1,0 +1,30 @@
+<h1>Visting  page Details</h1>
+<div data-sly-use.author="${'com.adobe.aem.mysite.site.core.models.VistingPageDetailsImpl' @ rAttribute='apple'}"></div>
+ <div>Page Title :  ${author.pageTitle}  </div>
+    <div>Request Attribute :  ${author.requestAttribute}  </div>
+    <div>Home Page Name :  ${author.homePageName}  </div>
+    <div>Modified By :  ${author.lastModifiedBy}  </div>
+        <div>resourcetype By :  ${author.resourcetype}  </div>
+
+        <div>path By :  ${author.parent}  </div>
+                <div>ChildrenNames By :  ${author.childrenNames}  </div>
+                <div>getNode By :  ${author.node}  </div>
+                <div>title :  ${author.title}  </div>
+                                <div>allproperties :  ${author.gopal}  </div>
+                                  <div>valuemap title :  ${author.rahul}  </div>
+                                                  <div>title1 :  ${author.title1}  </div>
+                                                    <div>title2 :  ${author.title2}  </div>
+ <div>CreatePage :  ${author.createPage}  </div>
+  <div>nirbhai :  ${author.nirbhai}  </div>
+<div>CreateNode :  ${author.NodeCreate}  </div>
+
+
+
+
+
+
+
+
+
+
+
