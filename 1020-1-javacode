@@ -1,0 +1,334 @@
+MODEL CLASS
+-----------
+package com.adobe.aem.mysite.site.core.models;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.jcr.Node;
+import javax.jcr.RepositoryException;
+
+import org.apache.sling.api.SlingHttpServletRequest;
+import org.apache.sling.api.resource.ModifiableValueMap;
+import org.apache.sling.api.resource.PersistenceException;
+import org.apache.sling.api.resource.Resource;
+import org.apache.sling.api.resource.ResourceResolver;
+import org.apache.sling.api.resource.ValueMap;
+import org.apache.sling.models.annotations.DefaultInjectionStrategy;
+import org.apache.sling.models.annotations.Model;
+import org.apache.sling.models.annotations.Via;
+import org.apache.sling.models.annotations.injectorspecific.RequestAttribute;
+import org.apache.sling.models.annotations.injectorspecific.ResourcePath;
+import org.apache.sling.models.annotations.injectorspecific.ScriptVariable;
+import org.apache.sling.models.annotations.injectorspecific.Self;
+import org.apache.sling.models.annotations.injectorspecific.SlingObject;
+
+import com.day.cq.dam.api.Asset;
+import com.day.cq.wcm.api.Page;
+import com.day.cq.wcm.api.PageManager;
+import com.day.cq.wcm.api.WCMException;
+import com.google.common.collect.ImmutableMap;
+
+@Model(adaptables = SlingHttpServletRequest.class, adapters = VistingPageDetails.class, defaultInjectionStrategy = DefaultInjectionStrategy.OPTIONAL)
+public class VistingPageDetailsImpl implements VistingPageDetails {
+
+    @Inject
+    Resource resource;
+
+    @SlingObject
+    ResourceResolver resourceResolver;
+
+    @Self
+    SlingHttpServletRequest slingHttpServletRequest;
+
+    @RequestAttribute(name = "rAttribute")
+    private String reqAttribute;
+
+    @ResourcePath(path = "/content/mysite/us/en/digiquad-header/jcr:content")
+    @Via("resource")
+    Resource resourcePage;
+    
+    @ResourcePath(path = "/content/dam/mysite/asset.jpg/jcr:content/metadata")
+    @Via("resource")
+    Resource resourcePage1;
+    
+    @ResourcePath(path = "/content/mysite/us/en/digiquad-header/jcr:content/my-node-name")
+    @Via("resource")
+    Resource resourcePage2;
+    
+    
+    
+    
+
+	@ScriptVariable
+    Page currentPage;
+
+    @Inject
+    @Via("resource")
+    @Named("jcr:lastModifiedBy")
+    String modifiedBy;
+    
+    
+    @Inject
+    @Via("resource")
+    @Named("jcr:title")
+    String title;
+    
+
+    @Override
+    public String getPageTitle() {
+        return currentPage.getTitle();
+    }
+
+    @Override
+    public String getRequestAttribute() {
+        return reqAttribute;
+    }
+
+    @Override
+    public String getTitle() {
+        return title;
+    }
+    
+    @Override
+    public String getLastModifiedBy() {
+        return modifiedBy;
+    }
+
+    @Override
+    public String getResourcetype() {
+        return resourcePage.getResourceType();
+    }
+
+    @Override
+    public String getHomePageName() {
+        return resourcePage.getName();
+    }
+
+    @Override
+    public String getPath() {
+        return resourcePage.getPath();
+    }
+    
+
+    
+    @Override
+    public String getNode() {
+        Node node = resourcePage.adaptTo(Node.class);
+
+        if (node != null) {
+            try {
+                return node.getPath();
+            } catch (RepositoryException e) {
+                // Log the exception or handle it appropriately
+                e.printStackTrace();
+            }
+        }
+        // If the adaptation fails or an exception occurs, return the path of the resource
+        return getPath();
+    }
+    
+    
+    
+    
+    
+    @Override
+    public String getTitle1() {
+        // Adapt the current resource to a Page object
+        Page page = resourcePage.adaptTo(Page.class);
+        
+        // Check if the page object is not null
+        if (page != null) {
+            // Retrieve the title of the page
+            String title1 = page.getTitle();
+            return title1;
+        } else {
+            return "Page title not available"; // Or handle this case as per your application's logic
+        }
+    }
+
+    
+    
+    
+    
+    @Override
+    public String getTitle2() {
+        // Adapt the current resource to an Asset object
+        Asset asset = resourcePage1.adaptTo(Asset.class);
+        
+        // Check if the asset object is not null
+        if (asset != null) {
+            // Retrieve the title metadata of the asset
+            String title2 = asset.getMetadataValue("dc:title");
+            
+            // Check if the title metadata is not null or empty
+            if (title2 != null && !title2.isEmpty()) {
+                return title2;
+            } else {
+                // Handle the case where the title metadata is not available
+                return "Title metadata not available";
+            }
+        } else {
+            // Handle the case where the asset could not be adapted
+            return "Asset not found";
+        }
+    }
+
+
+    
+    @Override
+    public String getGopal() {
+        ValueMap valueMap = resourcePage.getValueMap();
+        StringBuilder propertiesString = new StringBuilder();
+        for (Map.Entry<String, Object> entry : valueMap.entrySet()) {
+            propertiesString.append(entry.getKey()).append(": ").append(entry.getValue()).append("\n");
+        }
+        return propertiesString.toString();
+    }
+
+    
+    
+    @Override
+    public String getRahul() {
+    String pageTitle = resourcePage.adaptTo(ValueMap.class).get("jcr:title", String.class);
+    return pageTitle;
+    
+    }
+    
+    
+
+
+    
+    //Write properties using Sling’s ModifiableValueMap
+    @Override
+    public String getNirbhai() {
+        ModifiableValueMap properties = resourcePage.adaptTo(ModifiableValueMap.class);
+
+        if (properties != null) {
+            properties.put("cq:template", "/conf/mysite/settings/wcm/templates/page-content");
+            properties.remove("gopal");
+
+            try {
+                resourcePage.getResourceResolver().commit();
+                return "Changes successfully committed";
+            } catch (PersistenceException e) {
+                // Handle PersistenceException appropriately
+                e.printStackTrace();
+                return "Error committing changes: " + e.getMessage();
+            }
+        } else {
+            // Handle the case where resourcePage cannot be adapted to ModifiableValueMap
+            return "Cannot modify properties: Resource not adaptable to ModifiableValueMap";
+        }
+    }
+    
+    
+    //Create an AEM Page
+    @Override
+    public String getCreatePage() {
+        String templatePath = "/conf/mysite/settings/wcm/templates/page-content";
+        boolean autoSave = true;
+
+        PageManager pageManager = resourceResolver.adaptTo(PageManager.class);
+        Page newPage = null;
+		try {
+			newPage = pageManager.create("/content/mysite/us/en", "my-new-page", templatePath, "My New Page Title", autoSave);
+		} catch (WCMException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+        if (!autoSave) {
+            try {
+                resourceResolver.commit();
+            } catch (PersistenceException e) {
+                // Handle PersistenceException appropriately
+                e.printStackTrace();
+                return "Error committing changes: " + e.getMessage();
+            }
+        }
+
+        if (newPage != null) {
+            return "Page created successfully: " + newPage.getPath();
+        } else {
+            return "Failed to create page";
+        }
+    }
+    
+    
+   // Create a Sling Resource
+    @Override
+    public String getNodeCreate() {
+        try {
+            // Create a new node under the parent resource
+            resourceResolver.create(resourcePage, "my-node-name1", new ImmutableMap.Builder<String, Object>()
+                    .put("jcr:primaryType", "nt:unstructured")
+                    .put("jcr:title", "Golconda Gopal")
+                    .put("propertyName", "Other initial properties")
+                    .build());
+
+            // Commit the changes
+            resourceResolver.commit();
+            
+            
+           // Delete a Sling Resource
+            resourceResolver.delete(resourcePage2);
+
+            resourceResolver.commit();
+
+            
+            return "Node created successfully";
+        } catch (PersistenceException e) {
+            // Handle PersistenceException appropriately
+            e.printStackTrace();
+            return "Error creating node: " + e.getMessage();
+        }
+    }
+
+
+
+    
+  //  I see, it seems there's a misunderstanding. The error "Type mismatch: cannot convert from Resource to Page
+  " indicates that resourcePage.getParent() returns a Resource object, 
+  not a Page object. Therefore, you can't directly assign it to a Page variable.
+
+ //   To get the parent page from the current resource, you need to resolve the parent resource to a page. 
+ You can do this by adapting the parent resource to a Page object. Here's how you can correct it:
+   
+    @Override
+    public String getParent() {
+        Page parentPage = resourcePage.getParent().adaptTo(Page.class);
+        if (parentPage != null) {
+            return parentPage.getName();
+        } else {
+            return null; // Or you can throw an exception or handle it as per your requirement
+        }
+        
+    }
+    
+    
+    @Override
+    public List<String> getChildrenNames() {
+        List<String> childrenNames = new ArrayList<>();
+        Page currentPage = resourcePage.adaptTo(Page.class);
+        if (currentPage != null) {
+            Iterator<Page> childrenIterator = currentPage.listChildren();
+            while (childrenIterator.hasNext()) {
+                Page childPage = childrenIterator.next();
+                childrenNames.add(childPage.getName());
+            }
+        }
+        return childrenNames;
+    }
+
+
+    }
+
+
+  
+    
+
