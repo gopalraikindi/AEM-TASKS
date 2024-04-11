@@ -1,0 +1,5 @@
+<div data-sly-use.gopal="com.adobe.aem.mysite.site.core.models.Dummyapple"/>
+${gopal.title}
+${gopal.text @ context='html'}
+${gopal.text1 @ context='html'}
+
