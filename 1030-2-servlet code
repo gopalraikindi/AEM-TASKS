@@ -1,0 +1,38 @@
+package com.adobe.aem.mysite.site.core.servlets;
+
+
+import org.apache.sling.api.SlingHttpServletRequest;
+import org.apache.sling.api.SlingHttpServletResponse;
+import org.apache.sling.api.servlets.SlingAllMethodsServlet;
+import org.apache.sling.api.resource.Resource;
+import org.apache.sling.api.resource.ResourceResolver;
+import org.apache.sling.api.servlets.SlingSafeMethodsServlet;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.framework.Constants;
+
+import javax.servlet.Servlet;
+import javax.servlet.ServletException;
+import java.io.IOException;
+
+@Component(
+    service = { Servlet.class },
+    property = {
+        Constants.SERVICE_DESCRIPTION + "=Sample Servlet",
+        "sling.servlet.methods=" + "GET",
+        "sling.servlet.resourceTypes=" + "mysite/components/page"
+    }
+)
+public class SampleServlet extends SlingSafeMethodsServlet {
+
+    @Override
+    protected void doGet(SlingHttpServletRequest request, SlingHttpServletResponse response) throws ServletException, IOException {
+        response.setContentType("text/html");
+        Resource resource = request.getResource();
+        
+        // Get properties from the resource or perform other operations
+        String title = resource.getValueMap().get("jcr:title", String.class);
+        
+        response.getWriter().write("<h1>Title: " + title + "</h1>");
+    }
+}
+
