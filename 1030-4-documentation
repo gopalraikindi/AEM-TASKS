@@ -1,0 +1,4 @@
+"sling.servlet.resourceTypes=" + "mysite/components/page"  
+Based on this we have created many pages but we got the only one page tiltle because we define the specified path in the request
+http://localhost:4502/content/mysite/us/en/service_oklama_header/_jcr_content/
+(content/mysite/us/en/service_oklama_header/_jcr_content/)
