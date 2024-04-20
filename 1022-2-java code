@@ -130,7 +130,8 @@ public class GopalService {
             // Process results
             Iterator<Resource> resourceIterator = result.getResources();
             
-
+          //hasNext() iterate the data , data is available or not , it works like resource resolver
+         //next() is used to take the data , it works like resource
             while (resourceIterator.hasNext()) {
                 Resource resource = resourceIterator.next();
                 String resourcePath = resource.getPath();
