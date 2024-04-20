@@ -1,2 +1,11 @@
 <h1>${properties.text @context ='html'}</h1>
 <img src="${properties.fileReference}">
+
+
+<div data-sly-test ="${properties.title =='Gopal'}">
+<h1>${properties.title }</h1>
+</div>
+ <h1>${properties.text1 @context ='html'}</h1>
+ <h1>${properties.text2 @context ='html'}</h1>
+
+<img src="${properties.fileReference}" alt="Image Name" width="300" height="200">
