@@ -1,0 +1,2 @@
+<sly data-sly-use.model="com.adobe.aem.mysite.site.core.models.GopalModel"/>
+${model.ls}
