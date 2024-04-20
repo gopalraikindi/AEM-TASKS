@@ -1,0 +1,158 @@
+MODEL CLASS:
+------------
+package com.adobe.aem.mysite.site.core.models;
+
+import javax.annotation.PostConstruct;
+
+import org.apache.sling.api.SlingHttpServletRequest;
+import org.apache.sling.models.annotations.Model;
+import org.apache.sling.models.annotations.injectorspecific.OSGiService;
+import org.apache.sling.models.annotations.injectorspecific.Self;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+
+import com.adobe.aem.mysite.site.core.filters.services.GopalService;
+
+@Model(adaptables = SlingHttpServletRequest.class)
+public class GopalModel {
+    
+    private static final Logger LOG = LoggerFactory.getLogger(GopalModel.class);
+	
+	@Self
+    private SlingHttpServletRequest request;
+
+    @OSGiService
+    private GopalService gopal;
+    
+private List <String> ls;    
+    
+	public List<String> getLs() {
+	return gopal.ls;
+}
+
+
+	@PostConstruct
+    protected void init() {
+        // Get CF model name from request parameter
+        String cfModel = request.getParameter("cfModel");
+        
+        if (cfModel != null) {
+            LOG.info("Received CF model name: {}", cfModel);
+            gopal.performQuery(cfModel);
+        } else {
+            LOG.warn("CF model name is not provided in the request.");
+        }
+    }
+}
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+SERVICE CLASS:
+--------------
+package com.adobe.aem.mysite.site.core.filters.services;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import javax.jcr.Session;
+
+import org.apache.sling.api.resource.Resource;
+import org.apache.sling.api.resource.ResourceResolver;
+import org.apache.sling.api.resource.ResourceResolverFactory;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.adobe.aem.bcg.core.utils.ResolverUtil;
+import com.day.cq.search.PredicateGroup;
+import com.day.cq.search.Query;
+import com.day.cq.search.QueryBuilder;
+import com.day.cq.search.result.SearchResult;
+
+@Component(service = GopalService.class)
+public class GopalService {
+
+    private static final Logger LOG = LoggerFactory.getLogger(GopalService.class);
+
+    @Reference
+    private ResourceResolverFactory resourceResolverFactory;
+
+    @Reference
+    private QueryBuilder queryBuilder;
+    
+    public String cfModelName;
+    
+     public static List <String> ls;
+
+
+	public void performQuery(String cfModel) {
+		ls=new ArrayList<>();
+		
+        try {
+            // Log the start of query execution
+            LOG.info("Performing query for CF model: {}", cfModel);
+
+            // Get resource resolver using ResolverUtil
+            ResourceResolver resourceResolver = ResolverUtil.newResolver(resourceResolverFactory);
+
+            // Construct the full path
+            String basePath = "/conf/mysite/settings/dam/cfm/models";
+            String fullPath = basePath + "/" + cfModel;
+
+            // Define query parameters
+            Map<String, String> map = new HashMap<>();
+            map.put("path", "/content/dam/mysite");
+            map.put("property", "jcr:content/data/cq:model");
+            map.put("property.value", fullPath);
+
+            // Create the query
+ Query query = queryBuilder.createQuery(PredicateGroup.create(map),resourceResolver.adaptTo(Session.class));
+
+            // Execute the query
+            SearchResult result = query.getResult();
+            LOG.info("Query executed: {}", result.getQueryStatement());
+
+            // Log the number of results
+            LOG.info("Found {} resources for CF model: {}", result.getTotalMatches(), cfModel);
+
+            // Process results
+            Iterator<Resource> resourceIterator = result.getResources();
+            
+
+            while (resourceIterator.hasNext()) {
+                Resource resource = resourceIterator.next();
+                String resourcePath = resource.getPath();
+               // String cfModelName;
+                int lastIndex = resourcePath.lastIndexOf("/");
+               
+                cfModelName = resourcePath.substring(lastIndex + 1);
+                ls.add(cfModelName);
+
+                // Log each resource found
+                LOG.debug("Found resource: {}", resourcePath);
+            }
+
+        } catch (Exception e) {
+            // Log any exceptions that occur
+            LOG.error("Error while performing query for CF model: {}", cfModel, e);
+        }
+    }
+
+
+
+	public String getCfModelName() {
+		return cfModelName;
+	}
+}
