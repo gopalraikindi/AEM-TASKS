@@ -1,5 +1,5 @@
 MODEL CLASS:
-------------
+-----------
 package com.adobe.aem.mysite.site.core.models;
 
 import javax.annotation.PostConstruct;
