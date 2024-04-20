@@ -1,41 +1,76 @@
-MODEL CLASS
-------------
+MODEL-1
+-------
 package com.adobe.tourism.core.models;
 
+
+import javax.annotation.PostConstruct;
+
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.resource.Resource;
-import org.apache.sling.models.annotations.Default;
 import org.apache.sling.models.annotations.DefaultInjectionStrategy;
 import org.apache.sling.models.annotations.Model;
 import org.apache.sling.models.annotations.injectorspecific.ValueMapValue;
 
-@Model(adaptables = { Resource.class }, defaultInjectionStrategy = DefaultInjectionStrategy.OPTIONAL)
-
-public class LinksModel {
+@Model(adaptables=Resource.class , defaultInjectionStrategy=DefaultInjectionStrategy.OPTIONAL)
+public class Multi1 {
 	
-
 	@ValueMapValue
-	@Default(values = StringUtils.EMPTY)
-	private String linkLabel;
-
+	private String label;
+	
 	@ValueMapValue
-	private String linkURL;
+	private String linkPath;
+	
+	@ValueMapValue
+	private String target;
+	
+	@ValueMapValue
+	private boolean external;
+	
+	private String LinkURL;
+	
+	  @PostConstruct
+	  protected void init(){
 
-	public String getLinkLabel() {
-		return linkLabel;
+		  if(StringUtils.isNoneBlank(linkPath)) {
+
+		  LinkURL = BooleanUtils.isTrue(external) ? StringUtils.join("https://",linkPath ) : StringUtils.join(linkPath,".html");
+
+		  }
+
+		  }
+
+
+
+public String getLabel() {
+		  
+		return label;
+	}
+
+	public String getLinkPath() {
+		return linkPath;
+	}
+
+	public String getTarget() {
+		return target;
+	}
+
+	public boolean isExtrnal() {
+		return external;
 	}
 
 	public String getLinkURL() {
-		return StringUtils.join(linkURL, ".html");
+		return LinkURL;
 	}
-
+	
+	
 
 }
----------------------------------------------------------------------------------
----------------------------------------------------------------------------------
----------------------------------------------------------------------------------
-MODEL CLASS-1
----------------
+-------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------
+MODEL-2
+--------
 package com.adobe.tourism.core.models;
 
 import java.util.ArrayList;
@@ -45,18 +80,25 @@ import org.apache.sling.api.resource.Resource;
 import org.apache.sling.models.annotations.DefaultInjectionStrategy;
 import org.apache.sling.models.annotations.Model;
 import org.apache.sling.models.annotations.injectorspecific.ChildResource;
+import org.apache.sling.models.annotations.injectorspecific.ValueMapValue;
 
-@Model(adaptables = { Resource.class }, defaultInjectionStrategy = DefaultInjectionStrategy.OPTIONAL)
-public class MultifieldResource {
+@Model(adaptables=Resource.class,defaultInjectionStrategy=DefaultInjectionStrategy.OPTIONAL)
+public class Multi2 {
 	
-	@ChildResource
-	private final List<LinksModel> quickLinks  =  new ArrayList<>();
+	
+	@ValueMapValue
+	private String multitalented;
 
-	public List<LinksModel> getQuickLinks() {
-		List<LinksModel> linkscopy = new ArrayList<LinksModel>();
-		linkscopy.addAll(quickLinks);
-		return linkscopy;	
-		
+	@ChildResource
+	private List<Multi1> lingam = new ArrayList<>();
+
+	public String getMultitalented() {
+		return multitalented;
 	}
 
+	public List<Multi1> getLingam() {
+		return lingam;
+	}
+	
+	
 }
