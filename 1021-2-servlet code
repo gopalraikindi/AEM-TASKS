@@ -1,73 +1,70 @@
 package com.adobe.aem.mysite.site.core.servlets;
 
-import org.apache.sling.api.servlets.HttpConstants;
-import org.apache.sling.api.servlets.SlingAllMethodsServlet;
-import org.apache.sling.api.servlets.ServletResolverConstants;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+
+import javax.jcr.Session;
+import javax.servlet.Servlet;
+import javax.servlet.ServletException;
+import javax.servlet.ServletOutputStream;
+
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
-import org.apache.sling.api.resource.ResourceResolverFactory;
-import org.apache.sling.api.resource.LoginException;
+import org.apache.sling.api.servlets.HttpConstants;
+import org.apache.sling.api.servlets.ServletResolverConstants;
+import org.apache.sling.api.servlets.SlingAllMethodsServlet;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.framework.Constants;
-import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.servlet.Servlet;
-import javax.servlet.ServletException;
-import java.io.IOException;
 import com.day.cq.search.PredicateGroup;
 import com.day.cq.search.Query;
 import com.day.cq.search.QueryBuilder;
 import com.day.cq.search.result.SearchResult;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.Iterator;
-import javax.jcr.Session;
 
-import com.adobe.aem.bcg.core.utils.ResolverUtil;
+@Component(service = Servlet.class,
+        property = {
+                ServletResolverConstants.SLING_SERVLET_PATHS + "=/bin/contentFragments",
+                ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_GET
+        })
+public class ContentFragmentServlet extends SlingAllMethodsServlet {
 
-@Component(service = { Servlet.class }, property = {
-        Constants.SERVICE_DESCRIPTION + "=Custom Servlet to find CF models",
-        ServletResolverConstants.SLING_SERVLET_PATHS + "=/bin/cfmodelsearch",
-        ServletResolverConstants.SLING_SERVLET_METHODS + "=" + HttpConstants.METHOD_GET })
-
-public class CFModelSearchServlet extends SlingAllMethodsServlet {
-    private static final Logger LOG = LoggerFactory.getLogger(CFModelSearchServlet.class);
-
-    @Reference
-    private ResourceResolverFactory resolverFactory;
-
-    @Reference
-    private QueryBuilder queryBuilder;
+    private static final Logger LOG = LoggerFactory.getLogger(ContentFragmentServlet.class);
 
     @Override
     protected void doGet(SlingHttpServletRequest request, SlingHttpServletResponse response)
             throws ServletException, IOException {
-
-        // Get CF model name from request parameter
-        String cfModel = request.getParameter("cfModel");
+        response.setContentType("text/plain");
+        //ServletOutputStream outputStream = response.getOutputStream();
 
         try {
-            // Get resource resolver using ResolverUtil
-            ResourceResolver resourceResolver = ResolverUtil.newResolver(resolverFactory);
-            
-            // Construct the full path
-            String basePath = "/conf/mysite/settings/dam/cfm/models";
-            String fullPath = basePath + "/" + cfModel;
+            // Get the requested CFM name from the request parameter
+            //String requestedCFMName = request.getParameter("cfm");
 
-            // Define query parameters
-            Map<String, String> map = new HashMap<>();
-            map.put("path", "/content/dam/mysite");
-            map.put("property", "jcr:content/data/cq:model");
-            map.put("property.value", fullPath);
+            // Check if the CFM name is provided
+            //if (requestedCFMName == null || requestedCFMName.isEmpty()) {
+//                outputStream.println("Please provide a valid CFM name.");
+//                return;
+//            }
 
-            LOG.info("Query parameters: {}", map);
+            // Get the ResourceResolver
+            ResourceResolver resourceResolver = request.getResourceResolver();
+
+            // Get the QueryBuilder
+            QueryBuilder queryBuilder = resourceResolver.adaptTo(QueryBuilder.class);
+
+            // Build the query map
+            Map<String, String> queryMap = new HashMap<>();
+            queryMap.put("path", "/content/dam/mysite");
+            queryMap.put("property", "jcr:content/data/cq:model");
+            queryMap.put("property.value", "/conf/mysite/settings/dam/cfm/models/abc");
 
             // Create the query
-            Query query = queryBuilder.createQuery(PredicateGroup.create(map), resourceResolver.adaptTo(Session.class));
+            Query query = queryBuilder.createQuery(PredicateGroup.create(queryMap), resourceResolver.adaptTo(Session.class));
 
             // Execute the query
             SearchResult result = query.getResult();
@@ -80,16 +77,9 @@ public class CFModelSearchServlet extends SlingAllMethodsServlet {
             while (resourceIterator.hasNext()) {
                 Resource resource = resourceIterator.next();
                 String resourcePath = resource.getPath();
-                String cfModelName;
-                int lastIndex = resourcePath.lastIndexOf("/");
-                if (lastIndex != -1 && lastIndex + 1 < resourcePath.length()) {
-                    cfModelName = resourcePath.substring(lastIndex + 1);
-                } else {
-                    cfModelName = resourcePath; // Use full path if unable to extract CF model name
-                }
+                String cfModelName = resourcePath.substring(resourcePath.lastIndexOf("/") + 1);
                 response.getWriter().write(cfModelName + "\n");
             }
-
         } catch (Exception e) {
             response.getWriter().write("An error occurred while executing the query.");
         }
