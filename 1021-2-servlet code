@@ -43,7 +43,7 @@ public class ContentFragmentServlet extends SlingAllMethodsServlet {
 
         try {
             // Get the requested CFM name from the request parameter
-            //String requestedCFMName = request.getParameter("cfm");
+            String cfModel = request.getParameter("cfModel");
 
             // Check if the CFM name is provided
             //if (requestedCFMName == null || requestedCFMName.isEmpty()) {
@@ -53,6 +53,9 @@ public class ContentFragmentServlet extends SlingAllMethodsServlet {
 
             // Get the ResourceResolver
             ResourceResolver resourceResolver = request.getResourceResolver();
+           
+            String basePath = "/conf/mysite/settings/dam/cfm/models";
+            String fullPath = basePath + "/" + cfModel;
 
             // Get the QueryBuilder
             QueryBuilder queryBuilder = resourceResolver.adaptTo(QueryBuilder.class);
@@ -61,7 +64,7 @@ public class ContentFragmentServlet extends SlingAllMethodsServlet {
             Map<String, String> queryMap = new HashMap<>();
             queryMap.put("path", "/content/dam/mysite");
             queryMap.put("property", "jcr:content/data/cq:model");
-            queryMap.put("property.value", "/conf/mysite/settings/dam/cfm/models/abc");
+            queryMap.put("property.value",fullPath);
 
             // Create the query
             Query query = queryBuilder.createQuery(PredicateGroup.create(queryMap), resourceResolver.adaptTo(Session.class));
