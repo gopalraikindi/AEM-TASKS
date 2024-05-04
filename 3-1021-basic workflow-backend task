@@ -1,0 +1,73 @@
+JAVA CODE
+---------
+
+package com.adobe.aem.mysite.site.core.servlets;
+
+import com.adobe.granite.workflow.WorkflowSession;
+import com.adobe.granite.workflow.exec.WorkflowData;
+import com.adobe.granite.workflow.model.WorkflowModel;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.sling.api.SlingHttpServletRequest;
+import org.apache.sling.api.SlingHttpServletResponse;
+import org.apache.sling.api.resource.ResourceResolver;
+import org.apache.sling.api.servlets.SlingSafeMethodsServlet;
+import org.apache.sling.servlets.annotations.SlingServletPaths;
+import org.osgi.service.component.annotations.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.servlet.Servlet;
+import javax.servlet.ServletException;
+import java.io.IOException;
+
+@Component(service = Servlet.class)
+@SlingServletPaths(
+        value = {"/bin/executeworkflow"}
+)
+public class ExecuteWorkflow extends SlingSafeMethodsServlet {
+	
+
+    private static final Logger LOG = LoggerFactory.getLogger(ExecuteWorkflow.class);
+  
+    @Override
+    protected void doGet(final SlingHttpServletRequest req, final SlingHttpServletResponse resp) throws ServletException, IOException {
+       
+    	// Default status message
+    	String status = "Workflow Executing";
+
+        // Retrieve the ResourceResolver from the request
+        final ResourceResolver resourceResolver = req.getResourceResolver();
+
+        // Extract the page path from the request parameter
+        String payload = req.getRequestParameter("page").getString();
+        
+        try {
+            // Check if the payload (page path) is not blank
+            if(StringUtils.isNotBlank(payload)) {
+
+                // Adapt ResourceResolver to WorkflowSession
+                WorkflowSession workflowSession = resourceResolver.adaptTo(WorkflowSession.class);
+
+                // Get the workflow model by path
+                WorkflowModel workflowModel = workflowSession.getModel("/var/workflow/models/1-WF");
+
+                // Create workflow data based on the JCR path
+                WorkflowData workflowData = workflowSession.newWorkflowData("JCR_PATH", payload);
+
+                // Start the workflow execution and get the status
+                status = workflowSession.startWorkflow(workflowModel, workflowData).getState();
+            }
+
+        } catch (Exception e) {
+            // Log any errors that occur during workflow execution
+            LOG.error("Error in workflow execution: {}", e.getMessage());
+        }
+        
+        // Set the response content type to JSON
+        resp.setContentType("application/json");
+        
+        // Write the workflow execution status to the response
+        resp.getWriter().write(status);
+    }
+
+}
