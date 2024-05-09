@@ -1,0 +1,4 @@
+Create a component , which can render the weather of a city.
+ 
+End user should be able to enter the city name in the component and click submit, system should display the weather information of that city
+ 
