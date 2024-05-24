@@ -1,0 +1,74 @@
+package com.adobe.aem.guides.wknd.core.service.osgi;
+
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Modified;
+import org.osgi.service.metatype.annotations.Designate;
+
+@Component(service = SampleConfig.class)
+@Designate(ocd = SampleServiceConfig.class)
+public class SampleConfig {
+
+    private String greetingMessage;
+    private String formalGreetingMessage;
+
+    @Activate
+    @Modified
+    protected void activate(SampleServiceConfig config) {
+        this.greetingMessage = config.greetingMessage();
+        this.formalGreetingMessage = config.formalGreetingMessage();
+    }
+
+    public String getGreeting() {
+        return greetingMessage;
+    }
+
+    public String getFormalGreeting() {
+        return formalGreetingMessage;
+    }
+}
+-----------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------------------------
+
+package com.adobe.aem.guides.wknd.core.service.osgi;
+
+
+
+import org.osgi.service.metatype.annotations.AttributeDefinition;
+import org.osgi.service.metatype.annotations.ObjectClassDefinition;
+
+@ObjectClassDefinition(name = "Sample Service Conf_today", description = "Configuration for Sample Service")
+public @interface SampleServiceConfig {
+
+    @AttributeDefinition(name = "Greeting Message", description = "Greeting message to be returned by the service")
+    String greetingMessage() default "Hi Navatej !";
+
+    @AttributeDefinition(name = "Formal Greeting Message", description = "Formal greeting message to be returned by the service")
+    String formalGreetingMessage() default "welcome to digiquad solution.";
+}
+-----------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------------------------
+package com.adobe.aem.guides.wknd.core.models;
+
+import com.adobe.aem.guides.wknd.core.service.osgi.SampleConfig;
+import org.apache.sling.api.resource.Resource;
+import org.apache.sling.models.annotations.Model;
+import org.apache.sling.models.annotations.injectorspecific.OSGiService;
+@Model(adaptables = Resource.class)
+public class SampleConfigModel {
+//    private String greeting;
+//    private String formalGreeting;
+    @OSGiService
+    SampleConfig sampleConfig;
+    public String getGreeting() {
+        return sampleConfig.getGreeting();
+    }
+
+    public String getFormalGreeting() {
+        return sampleConfig.getFormalGreeting();
+    }
+}
+
+
