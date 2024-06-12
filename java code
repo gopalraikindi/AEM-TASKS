@@ -1,0 +1,105 @@
+package com.adobe.aem.guides.wknd.core.schedulers;
+
+import org.apache.sling.api.resource.ResourceResolver;
+import org.apache.sling.api.resource.ResourceResolverFactory;
+import org.apache.sling.api.resource.Resource;
+import org.apache.sling.api.resource.LoginException;
+import org.apache.sling.api.resource.PersistenceException;
+import org.apache.sling.commons.scheduler.ScheduleOptions;
+import org.apache.sling.commons.scheduler.Scheduler;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Deactivate;
+import org.osgi.service.component.annotations.Reference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Calendar;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.HashMap;
+
+@Component(immediate = true, service = Runnable.class)
+public class CleanupOldFilesScheduler implements Runnable {
+
+    private static final Logger LOG = LoggerFactory.getLogger(CleanupOldFilesScheduler.class);
+    private static final String FILES_PATH = "/content/dam/dq-aem";
+    private static final int DAYS_THRESHOLD = 0;
+
+    @Reference
+    private Scheduler scheduler;
+
+    @Reference
+    private ResourceResolverFactory resolverFactory;
+
+    @Activate
+    protected void activate() {
+        LOG.info("Activating CleanupOldFilesScheduler.");
+        ScheduleOptions options = scheduler.EXPR("0 30 15 * * ?");
+        options.name("Cleanup Old Files Scheduler");
+        options.canRunConcurrently(false);
+
+        try {
+            scheduler.schedule(this, options);
+            LOG.info("Scheduled CleanupOldFilesScheduler with cron expression '0 19 15 * * ?'.");
+        } catch (Exception e) {
+            LOG.error("Scheduler error", e);
+        }
+    }
+
+    @Deactivate
+    protected void deactivate() {
+        LOG.info("Deactivating CleanupOldFilesScheduler.");
+        scheduler.unschedule("Cleanup Old Files Scheduler");
+        LOG.info("Unscheduled CleanupOldFilesScheduler.");
+    }
+
+    @Override
+    public void run() {
+        LOG.info("Running CleanupOldFilesScheduler.");
+        try (ResourceResolver resolver =  getServiceResourceResolver()) {
+            LOG.info("Obtained ResourceResolver.");
+            Resource resource = resolver.getResource(FILES_PATH);
+            if (resource != null) {
+                LOG.info("Found resource at path: {}", FILES_PATH);
+                Iterator<Resource> files = resource.listChildren();
+                Calendar thresholdDate = Calendar.getInstance();
+                thresholdDate.add(Calendar.DAY_OF_YEAR, -DAYS_THRESHOLD);
+                LOG.info("Threshold date set to: {}", thresholdDate.getTime());
+
+                while (files.hasNext()) {
+                    Resource file = files.next();
+                    LOG.info("Checking file: {}", file.getPath());
+                    Calendar lastModified = file.getValueMap().get("jcr:content/jcr:lastModified", Calendar.class);
+
+                    if (lastModified != null) {
+                        LOG.info("File last modified date: {}", lastModified.getTime());
+                        if (lastModified.before(thresholdDate)) {
+                            resolver.delete(file);
+                            LOG.info("Deleted old file: {}", file.getPath());
+                        }
+                    } else {
+                        LOG.warn("Last modified date not found for file: {}", file.getPath());
+                    }
+                }
+                resolver.commit();
+                LOG.info("Old files cleanup completed.");
+            } else {
+                LOG.warn("Resource not found at path: {}", FILES_PATH);
+            }
+        } catch (PersistenceException e) {
+            LOG.error("Failed to clean up old files", e);
+        } catch (LoginException e) {
+            LOG.error("Failed to obtain service resource resolver", e);
+        }
+    }
+
+    private ResourceResolver getServiceResourceResolver() throws PersistenceException, LoginException {
+        LOG.info("Getting service ResourceResolver.");
+        Map<String, Object> param = new HashMap<>();
+        param.put(ResourceResolverFactory.SUBSERVICE, "geeksserviceuser");
+        ResourceResolver resolver = resolverFactory.getServiceResourceResolver(param);
+        LOG.info("Service ResourceResolver obtained.");
+        return resolver;
+    }
+}
