@@ -1,0 +1,101 @@
+package com.adobe.aem.guides.wknd.core.schedulers;
+
+import org.apache.commons.mail.DefaultAuthenticator;
+import org.apache.commons.mail.Email;
+import org.apache.commons.mail.EmailException;
+import org.apache.commons.mail.SimpleEmail;
+import org.apache.sling.commons.scheduler.ScheduleOptions;
+import org.apache.sling.commons.scheduler.Scheduler;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.day.cq.mailer.MessageGateway;
+import com.day.cq.mailer.MessageGatewayService;
+
+@Component(
+    immediate = true,
+    service = Runnable.class
+
+)
+public class EmailNotificationScheduler implements Runnable {
+
+    private static final Logger LOG = LoggerFactory.getLogger(EmailNotificationScheduler.class);
+
+    @Reference
+    private Scheduler scheduler;
+
+    @Reference
+    private MessageGatewayService messageGatewayService;
+
+    @Activate
+    protected void activate() {
+        ScheduleOptions options = scheduler.EXPR("0 40 16 * * ?"); // Run daily at 9 AM
+        options.name("Email Notification Scheduler");
+        options.canRunConcurrently(false);
+
+        try {
+            scheduler.schedule(this, options);
+        } catch (Exception e) {
+            LOG.error("Scheduler error", e);
+        }
+    }
+
+  
+
+    @Override
+    public void run() {
+        try {
+            LOG.info("Scheduled task: Email Notification executed.");
+
+            // Set up the Email message
+            Email email = new SimpleEmail();
+
+            // Set the mail values
+            String emailToRecipients = "dileepkandregula4641@gmail.com";
+            String emailCcRecipients = "panchakarlanirbhai@gmail.com";
+            String subject = "Scheduled Asset Deleted Notification";
+            String body = "This is a gopal i want to talk with you  notification email.";
+
+            email.addTo(emailToRecipients);
+            email.addCc(emailCcRecipients);
+            email.setSubject(subject);
+            email.setMsg(body);
+
+            // Set SMTP server settings
+            email.setHostName("smtp.gmail.com");
+            email.setSmtpPort(587);
+            email.setStartTLSEnabled(true);
+            
+            //for generating this password "dtumzowlaunswlzp",check nirbhai workflow documentation
+            email.setAuthenticator(new DefaultAuthenticator("nirbhaipanchakarla1@gmail.com", "dtumzowlaunswlzp"));
+
+            // Log the email details
+            LOG.info("Email details:");
+            LOG.info("To: {}", emailToRecipients);
+            LOG.info("Cc: {}", emailCcRecipients);
+            LOG.info("Subject: {}", subject);
+            LOG.info("Body: {}", body);
+
+            // Get the message gateway
+            MessageGateway<Email> messageGateway = messageGatewayService.getGateway(SimpleEmail.class);
+
+            if (messageGateway == null) {
+                LOG.error("MessageGateway is null. Unable to proceed.");
+                return;
+            }
+
+            // Send the email
+            LOG.info("Sending email...");
+            messageGateway.send(email);
+            LOG.info("Email notification sent successfully.");
+
+        } catch (EmailException e) {
+            LOG.error("Error sending email notification: {}", e.getMessage(), e);
+        } catch (Exception e) {
+            LOG.error("Unexpected error executing scheduled task: {}", e.getMessage(), e);
+        }
+    }
+}
