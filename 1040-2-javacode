@@ -18,10 +18,10 @@ public class OsgiServiceImplementation implements OsgiServiceInterface{
 	
 	private OsgiConfigurations configurations;
 	
-	@Activate
-	private void activate(OsgiConfigurations config) {
-			configurations = config;
-	}
+	//@Activate
+	//private void activate(OsgiConfigurations config) {
+	//		configurations = config;
+	//}
 	
 	
 
